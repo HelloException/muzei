@@ -16,18 +16,18 @@
 
 package com.google.android.apps.muzei.tasker
 
-import android.arch.lifecycle.ViewModelProvider
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
-import android.support.v7.app.AlertDialog
-import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.TextView
-import com.google.android.apps.muzei.util.observeNonNull
+import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.observe
 import com.twofortyfouram.locale.api.Intent.EXTRA_BUNDLE
 import com.twofortyfouram.locale.api.Intent.EXTRA_STRING_BLURB
 import net.nurik.roman.muzei.R
@@ -38,13 +38,7 @@ import net.nurik.roman.muzei.R
  */
 class TaskerSettingActivity : AppCompatActivity() {
 
-    private val viewModelProvider by lazy {
-        ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory
-                .getInstance(application))
-    }
-    private val viewModel by lazy {
-        viewModelProvider[TaskerSettingViewModel::class.java]
-    }
+    private val viewModel: TaskerSettingViewModel by viewModels()
 
     private val adapter by lazy {
         ActionAdapter(this)
@@ -71,7 +65,7 @@ class TaskerSettingActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel.actions.observeNonNull(this) { actions ->
+        viewModel.actions.observe(this) { actions ->
             adapter.clear()
             adapter.addAll(actions)
             if (!dialog.isShowing) {

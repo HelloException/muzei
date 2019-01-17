@@ -21,13 +21,13 @@ import android.app.Dialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
-import android.support.v4.app.Fragment
-import android.support.v7.app.AlertDialog
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.observe
 import com.google.android.apps.muzei.api.MuzeiArtSource
 import com.google.android.apps.muzei.room.MuzeiDatabase
-import com.google.android.apps.muzei.util.observe
 import net.nurik.roman.muzei.R
 
 class SourceSetupActivity : AppCompatActivity() {
@@ -43,7 +43,7 @@ class SourceSetupActivity : AppCompatActivity() {
         }
     }
 
-    override fun onAttachFragment(fragment: Fragment?) {
+    override fun onAttachFragment(fragment: Fragment) {
         if (fragment is SourceWarningDialogFragment) {
             fragment.positiveListener = {
                 MuzeiDatabase.getInstance(this).sourceDao().currentSource.observe(this) { source ->
@@ -107,7 +107,7 @@ class SourceWarningDialogFragment : DialogFragment() {
     }
 
     override fun onStop() {
-        if (!dialog.isShowing) {
+        if (!requireDialog().isShowing) {
             requireActivity().finish()
         }
         super.onStop()

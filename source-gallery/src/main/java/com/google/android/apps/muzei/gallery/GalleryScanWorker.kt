@@ -27,16 +27,16 @@ import android.os.Build
 import android.provider.BaseColumns
 import android.provider.DocumentsContract
 import android.provider.MediaStore
-import android.support.annotation.RequiresApi
-import android.support.media.ExifInterface
-import android.support.v4.content.ContextCompat
 import android.text.TextUtils
 import android.text.format.DateUtils
 import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
+import androidx.exifinterface.media.ExifInterface
+import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import androidx.work.Worker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.google.android.apps.muzei.api.provider.Artwork
@@ -55,7 +55,7 @@ import java.util.Random
 class GalleryScanWorker(
         context: Context,
         workerParams: WorkerParameters
-) : Worker(context, workerParams) {
+) : CoroutineWorker(context, workerParams) {
     companion object {
         private const val TAG = "GalleryScanWorker"
         private const val INITIAL_SCAN_TAG = "initialScan"
@@ -88,20 +88,20 @@ class GalleryScanWorker(
         Geocoder(applicationContext)
     }
 
-    override fun doWork(): Result {
+    override suspend fun doWork(): Result {
         val providerClient = ProviderContract.getProviderClient(
                 applicationContext, GALLERY_ART_AUTHORITY)
         val id = inputData.getLong(INITIAL_SCAN_ID, -1L)
         if (id != -1L) {
             val chosenPhoto = GalleryDatabase.getInstance(applicationContext)
                     .chosenPhotoDao()
-                    .chosenPhotoBlocking(id)
+                    .getChosenPhoto(id)
             return if (chosenPhoto != null) {
                 scanChosenPhoto(providerClient, chosenPhoto)
                 deleteMediaUris(providerClient)
-                Result.SUCCESS
+                Result.success()
             } else {
-                Result.FAILURE
+                Result.failure()
             }
         }
         val chosenPhotos = GalleryDatabase.getInstance(applicationContext)
@@ -113,7 +113,7 @@ class GalleryScanWorker(
                 scanChosenPhoto(providerClient, chosenPhoto)
             }
             deleteMediaUris(providerClient)
-            return Result.SUCCESS
+            return Result.success()
         }
         return addMediaUri(providerClient)
     }
@@ -124,7 +124,7 @@ class GalleryScanWorker(
                 arrayOf(MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString()))
     }
 
-    private fun scanChosenPhoto(providerClient: ProviderClient, chosenPhoto: ChosenPhoto) {
+    private suspend fun scanChosenPhoto(providerClient: ProviderClient, chosenPhoto: ChosenPhoto) {
         if (chosenPhoto.isTreeUri && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             addTreeUri(providerClient, chosenPhoto)
         } else {
@@ -136,13 +136,32 @@ class GalleryScanWorker(
                         Uri.fromFile(cachedFile),
                         chosenPhoto.contentUri))
             } else {
-                providerClient.addArtwork(createArtwork(chosenPhoto.uri))
+                addUri(providerClient, chosenPhoto)
             }
         }
     }
 
+    private suspend fun addUri(providerClient: ProviderClient, chosenPhoto: ChosenPhoto) {
+        val imageUri = chosenPhoto.uri
+        try {
+            applicationContext.contentResolver.query(imageUri,
+                    arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID),
+                    null, null, null)?.use { data ->
+                if (data.moveToFirst()) {
+                    providerClient.addArtwork(createArtwork(chosenPhoto.uri))
+                } else {
+                    Log.w(TAG, "Unable to load image from $imageUri, deleting row")
+                    deleteChosenPhoto(chosenPhoto)
+                }
+            }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Unable to access image from $imageUri, deleting row", e)
+            deleteChosenPhoto(chosenPhoto)
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    private fun addTreeUri(providerClient: ProviderClient, chosenPhoto: ChosenPhoto) {
+    private suspend fun addTreeUri(providerClient: ProviderClient, chosenPhoto: ChosenPhoto) {
         val treeUri = chosenPhoto.uri
         val allImages = mutableListOf<Uri>()
         try {
@@ -181,11 +200,15 @@ class GalleryScanWorker(
             }
         } catch (e: SecurityException) {
             Log.w(TAG, "Unable to load images from $treeUri, deleting row", e)
-            GlobalScope.launch {
-                GalleryDatabase.getInstance(applicationContext)
-                        .chosenPhotoDao()
-                        .delete(applicationContext, listOf(chosenPhoto.id))
-            }
+            deleteChosenPhoto(chosenPhoto)
+        }
+    }
+
+    private fun deleteChosenPhoto(chosenPhoto: ChosenPhoto) {
+        GlobalScope.launch {
+            GalleryDatabase.getInstance(applicationContext)
+                    .chosenPhotoDao()
+                    .delete(applicationContext, listOf(chosenPhoto.id))
         }
     }
 
@@ -226,11 +249,11 @@ class GalleryScanWorker(
     }
 
     @SuppressLint("Recycle")
-    private fun addMediaUri(providerClient: ProviderClient): Result {
+    private suspend fun addMediaUri(providerClient: ProviderClient): Result {
         if (ContextCompat.checkSelfPermission(applicationContext,
                         android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             Log.w(TAG, "Missing read external storage permission.")
-            return Result.FAILURE
+            return Result.failure()
         }
         applicationContext.contentResolver.query(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -240,7 +263,7 @@ class GalleryScanWorker(
             val count = data.count
             if (count == 0) {
                 Log.d(TAG, "No photos in the gallery.")
-                return Result.FAILURE
+                return Result.failure()
             }
             val lastToken = providerClient.lastAddedArtwork?.token
 
@@ -259,21 +282,21 @@ class GalleryScanWorker(
                         providerClient.addArtwork(createArtwork(
                                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                                 imageUri))
-                        return Result.SUCCESS
+                        return Result.success()
                     }
                 }
             }
             if (BuildConfig.DEBUG) {
                 Log.i(TAG, "Unable to find any other valid photos in the gallery")
             }
-            return Result.FAILURE
+            return Result.failure()
         } ?: run {
             Log.w(TAG, "Empty cursor.")
-            return Result.FAILURE
+            return Result.failure()
         }
     }
 
-    private fun createArtwork(
+    private suspend fun createArtwork(
             baseUri: Uri,
             imageUri: Uri = baseUri,
             publicWebUri: Uri = imageUri
@@ -301,7 +324,7 @@ class GalleryScanWorker(
         }
     }
 
-    private fun ensureMetadataExists(imageUri: Uri): Metadata {
+    private suspend fun ensureMetadataExists(imageUri: Uri): Metadata {
         val metadataDao = GalleryDatabase.getInstance(applicationContext)
                 .metadataDao()
         val existingMetadata = metadataDao.metadataForUri(imageUri)

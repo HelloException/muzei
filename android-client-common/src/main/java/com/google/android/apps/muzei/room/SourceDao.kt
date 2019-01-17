@@ -16,14 +16,14 @@
 
 package com.google.android.apps.muzei.room
 
-import android.arch.lifecycle.LiveData
-import android.arch.persistence.room.Dao
-import android.arch.persistence.room.Delete
-import android.arch.persistence.room.Insert
-import android.arch.persistence.room.Query
-import android.arch.persistence.room.TypeConverters
-import android.arch.persistence.room.Update
 import android.content.ComponentName
+import androidx.lifecycle.LiveData
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.TypeConverters
+import androidx.room.Update
 import com.google.android.apps.muzei.room.converter.ComponentNameTypeConverter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -37,12 +37,8 @@ abstract class SourceDao {
     @get:Query("SELECT * FROM sources")
     abstract val sources: LiveData<List<Source>>
 
-    @get:Query("SELECT * FROM sources")
-    abstract val sourcesBlocking: List<Source>
-
-    suspend fun getSources() = withContext(Dispatchers.Default) {
-        sourcesBlocking
-    }
+    @Query("SELECT * FROM sources")
+    abstract suspend fun getSources(): List<Source>
 
     @get:TypeConverters(ComponentNameTypeConverter::class)
     @get:Query("SELECT component_name FROM sources")
@@ -58,12 +54,8 @@ abstract class SourceDao {
         currentSourceBlocking
     }
 
-    @get:Query("SELECT * FROM sources WHERE selected=1 AND wantsNetworkAvailable=1")
-    internal abstract val currentSourcesThatWantNetworkBlocking: List<Source>
-
-    suspend fun getCurrentSourcesThatWantNetwork() = withContext(Dispatchers.Default) {
-        currentSourcesThatWantNetworkBlocking
-    }
+    @Query("SELECT * FROM sources WHERE selected=1 AND wantsNetworkAvailable=1")
+    abstract suspend fun getCurrentSourcesThatWantNetwork(): List<Source>
 
     @Insert
     abstract fun insert(source: Source)

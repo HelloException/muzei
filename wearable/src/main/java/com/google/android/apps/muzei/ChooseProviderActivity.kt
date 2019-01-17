@@ -17,25 +17,25 @@
 package com.google.android.apps.muzei
 
 import android.app.Activity
-import android.arch.lifecycle.ViewModelProvider
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.graphics.Rect
 import android.os.Bundle
-import android.support.v4.app.FragmentActivity
-import android.support.v7.recyclerview.extensions.ListAdapter
-import android.support.v7.util.DiffUtil
-import android.support.v7.widget.RecyclerView
-import android.support.wear.widget.WearableLinearLayoutManager
-import android.support.wear.widget.WearableRecyclerView
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import androidx.activity.viewModels
 import androidx.core.os.bundleOf
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.observe
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
+import androidx.wear.widget.WearableLinearLayoutManager
+import androidx.wear.widget.WearableRecyclerView
 import com.google.android.apps.muzei.api.provider.MuzeiArtProvider
 import com.google.android.apps.muzei.sync.ProviderManager
-import com.google.android.apps.muzei.util.observeNonNull
 import com.google.firebase.analytics.FirebaseAnalytics
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -49,13 +49,7 @@ class ChooseProviderActivity : FragmentActivity() {
         private const val START_ACTIVITY_PROVIDER = "startActivityProvider"
     }
 
-    private val viewModelProvider by lazy {
-        ViewModelProvider(this,
-                ViewModelProvider.AndroidViewModelFactory.getInstance(application))
-    }
-    private val viewModel by lazy {
-        viewModelProvider[ChooseProviderViewModel::class.java]
-    }
+    private val viewModel: ChooseProviderViewModel by viewModels()
 
     private val adapter = ProviderAdapter()
 
@@ -70,7 +64,7 @@ class ChooseProviderActivity : FragmentActivity() {
         providerList.layoutManager = WearableLinearLayoutManager(this)
         providerList.adapter = adapter
 
-        viewModel.providers.observeNonNull(this) { providers ->
+        viewModel.providers.observe(this) { providers ->
             adapter.submitList(providers)
         }
     }

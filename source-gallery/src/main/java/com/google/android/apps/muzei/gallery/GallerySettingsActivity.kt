@@ -19,11 +19,6 @@ package com.google.android.apps.muzei.gallery
 import android.Manifest
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.Observer
-import android.arch.lifecycle.ViewModelProvider
-import android.arch.paging.PagedList
-import android.arch.paging.PagedListAdapter
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -36,47 +31,33 @@ import android.os.Bundle
 import android.os.Handler
 import android.provider.DocumentsContract
 import android.provider.Settings
-import android.support.annotation.RequiresApi
-import android.support.design.widget.Snackbar
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
-import android.support.v4.view.ViewCompat
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.util.DiffUtil
-import android.support.v7.widget.DefaultItemAnimator
-import android.support.v7.widget.GridLayoutManager
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.Toolbar
-import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuItem
-import android.view.MotionEvent
-import android.view.View
-import android.view.ViewAnimationUtils
-import android.view.ViewGroup
-import android.view.ViewTreeObserver
-import android.widget.Button
-import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
-import android.widget.ViewAnimator
+import android.view.*
+import android.widget.*
+import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.core.view.ViewCompat
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.observe
+import androidx.paging.PagedList
+import androidx.paging.PagedListAdapter
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
-import com.google.android.apps.muzei.util.MultiSelectionController
-import com.google.android.apps.muzei.util.coroutineScope
-import com.google.android.apps.muzei.util.getString
-import com.google.android.apps.muzei.util.getStringOrNull
-import com.google.android.apps.muzei.util.observe
-import com.google.android.apps.muzei.util.toast
+import com.google.android.apps.muzei.util.*
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import java.util.ArrayList
-import java.util.HashSet
-import java.util.LinkedList
+import java.util.*
 
 class GallerySettingsActivity : AppCompatActivity(), Observer<PagedList<ChosenPhoto>>,
         GalleryImportPhotosDialogFragment.OnRequestContentListener, MultiSelectionController.Callbacks {
@@ -102,11 +83,7 @@ class GallerySettingsActivity : AppCompatActivity(), Observer<PagedList<ChosenPh
         }
     }
 
-    private val viewModel: GallerySettingsViewModel by lazy {
-        ViewModelProvider(this,
-                ViewModelProvider.AndroidViewModelFactory.getInstance(application))
-                .get(GallerySettingsViewModel::class.java)
-    }
+    private val viewModel: GallerySettingsViewModel by viewModels()
 
     private val chosenPhotosLiveData: LiveData<PagedList<ChosenPhoto>> by lazy {
         viewModel.chosenPhotos
@@ -147,6 +124,10 @@ class GallerySettingsActivity : AppCompatActivity(), Observer<PagedList<ChosenPh
     private var lastTouchY: Int = 0
 
     private val chosenPhotosAdapter = GalleryAdapter()
+
+    init {
+        bundleSavedStateRegistry.registerSavedStateProvider(STATE_SELECTION, multiSelectionController)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -285,10 +266,6 @@ class GallerySettingsActivity : AppCompatActivity(), Observer<PagedList<ChosenPh
         super.onResume()
         // Permissions might have changed in the background
         onDataSetChanged()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -590,7 +567,8 @@ class GallerySettingsActivity : AppCompatActivity(), Observer<PagedList<ChosenPh
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
-        multiSelectionController.restoreInstanceState(savedInstanceState)
+        multiSelectionController.restoreInstanceState(
+                bundleSavedStateRegistry.consumeRestoredStateForKey(STATE_SELECTION))
     }
 
     internal class PhotoViewHolder(val rootView: View) : RecyclerView.ViewHolder(rootView) {
@@ -806,10 +784,5 @@ class GallerySettingsActivity : AppCompatActivity(), Observer<PagedList<ChosenPh
     override fun onChanged(chosenPhotos: PagedList<ChosenPhoto>?) {
         chosenPhotosAdapter.submitList(chosenPhotos)
         onDataSetChanged()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        multiSelectionController.saveInstanceState(outState)
     }
 }

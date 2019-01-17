@@ -17,8 +17,8 @@
 package com.google.android.apps.muzei.util
 
 import android.content.Context
-import android.support.annotation.StringRes
 import android.widget.Toast
+import androidx.annotation.StringRes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -40,15 +40,6 @@ fun Context.toast(text: CharSequence, duration: Int = Toast.LENGTH_SHORT) {
  */
 fun Context.toast(@StringRes resId: Int, duration: Int = Toast.LENGTH_SHORT) {
     Toast.makeText(this, resId, duration).apply { show() }
-}
-
-fun Context.toastFromBackground(
-        text: CharSequence,
-        duration: Int = Toast.LENGTH_SHORT
-) {
-    GlobalScope.launch(Dispatchers.Main) {
-        Toast.makeText(this@toastFromBackground, text, duration).apply { show() }
-    }
 }
 
 fun Context.toastFromBackground(

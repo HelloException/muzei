@@ -17,14 +17,15 @@
 package com.google.android.apps.muzei.tasker
 
 import android.app.Application
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.Observer
 import android.content.pm.ProviderInfo
 import android.graphics.drawable.Drawable
-import android.support.v4.content.ContextCompat
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.viewModelScope
 import com.google.android.apps.muzei.room.InstalledProvidersLiveData
-import com.google.android.apps.muzei.util.ScopedAndroidViewModel
 import net.nurik.roman.muzei.BuildConfig
 import net.nurik.roman.muzei.R
 
@@ -36,7 +37,7 @@ internal data class Action(
 
 internal class TaskerSettingViewModel(
         application: Application
-) : ScopedAndroidViewModel(application) {
+) : AndroidViewModel(application) {
 
     private val imageSize = application.resources.getDimensionPixelSize(
             R.dimen.tasker_action_icon_size)
@@ -70,7 +71,7 @@ internal class TaskerSettingViewModel(
         a1.text.compareTo(a2.text)
     }
 
-    val actions : LiveData<List<Action>?> = object : MutableLiveData<List<Action>?>() {
+    val actions : LiveData<List<Action>> = object : MutableLiveData<List<Action>>() {
         val nextArtworkAction = Action(
                 ContextCompat.getDrawable(application, R.drawable.ic_next_artwork)!!.apply {
                     setBounds(0, 0, imageSize, imageSize)
@@ -79,7 +80,7 @@ internal class TaskerSettingViewModel(
                 NextArtworkAction)
 
         val installedProvidersLiveData = InstalledProvidersLiveData(application,
-                this@TaskerSettingViewModel)
+                viewModelScope)
         val installedProvidersObserver = Observer<List<ProviderInfo>> { providers ->
             val pm = application.packageManager
             val actionsList = mutableListOf(nextArtworkAction)

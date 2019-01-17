@@ -16,12 +16,12 @@
 
 package com.google.android.apps.muzei.room
 
-import android.arch.lifecycle.LiveData
-import android.arch.persistence.room.Dao
-import android.arch.persistence.room.Delete
-import android.arch.persistence.room.Insert
-import android.arch.persistence.room.Query
-import android.arch.persistence.room.Update
+import androidx.lifecycle.LiveData
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -44,10 +44,10 @@ abstract class ProviderDao {
     abstract fun insert(provider: Provider)
 
     @Update
-    abstract fun update(provider: Provider)
+    abstract suspend fun update(provider: Provider)
 
     @Delete
-    abstract fun delete(provider: Provider)
+    abstract suspend fun delete(provider: Provider)
 
     @Query("DELETE FROM provider")
     abstract fun deleteAll()

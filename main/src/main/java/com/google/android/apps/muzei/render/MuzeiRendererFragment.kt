@@ -23,12 +23,13 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.opengl.GLSurfaceView
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.core.os.bundleOf
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.observe
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
@@ -37,7 +38,6 @@ import com.bumptech.glide.request.RequestOptions
 import com.google.android.apps.muzei.settings.EffectsLockScreenOpenLiveData
 import com.google.android.apps.muzei.util.ImageBlurrer
 import com.google.android.apps.muzei.util.blur
-import com.google.android.apps.muzei.util.observeNonNull
 import com.google.android.apps.muzei.util.roundMult4
 import java.security.MessageDigest
 
@@ -179,7 +179,7 @@ class MuzeiRendererFragment : Fragment(), RenderController.Callbacks, MuzeiBlurR
             }
             lifecycle.addObserver(renderController)
             if (!demoMode) {
-                EffectsLockScreenOpenLiveData.observeNonNull(this@MuzeiRendererFragment) {
+                EffectsLockScreenOpenLiveData.observe(this@MuzeiRendererFragment) {
                     isEffectsLockScreenOpen ->
                     renderController.onLockScreen = isEffectsLockScreenOpen
                 }

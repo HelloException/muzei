@@ -19,9 +19,9 @@ package com.google.android.apps.muzei
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
-import android.support.v4.app.FragmentActivity
 import android.util.Log
 import androidx.core.os.bundleOf
+import androidx.fragment.app.FragmentActivity
 import com.google.android.apps.muzei.single.BuildConfig.SINGLE_AUTHORITY
 import com.google.android.apps.muzei.single.SingleArtProvider
 import com.google.android.apps.muzei.sync.ProviderManager
@@ -45,7 +45,7 @@ class PhotoSetAsTargetActivity : FragmentActivity() {
             coroutineScope.launch(Dispatchers.Main) {
                 val context = this@PhotoSetAsTargetActivity
                 val success = SingleArtProvider.setArtwork(context, uri)
-                if (success == false) {
+                if (!success) {
                     Log.e(TAG, "Unable to insert artwork for $uri")
                     toast(R.string.set_as_wallpaper_failed)
                     finish()

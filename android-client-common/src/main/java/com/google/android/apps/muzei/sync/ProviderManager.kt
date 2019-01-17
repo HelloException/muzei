@@ -17,8 +17,6 @@
 package com.google.android.apps.muzei.sync
 
 import android.annotation.SuppressLint
-import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.Observer
 import android.content.BroadcastReceiver
 import android.content.ContentResolver
 import android.content.Context
@@ -34,6 +32,8 @@ import android.os.RemoteException
 import android.preference.PreferenceManager
 import android.util.Log
 import androidx.core.content.edit
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.google.android.apps.muzei.api.internal.ProtocolConstants
 import com.google.android.apps.muzei.api.provider.ProviderContract
 import com.google.android.apps.muzei.room.Artwork
@@ -85,10 +85,13 @@ class ProviderManager private constructor(private val context: Context)
         suspend fun select(context: Context, authority: String) = withContext(Dispatchers.Default) {
             val database = MuzeiDatabase.getInstance(context)
             database.beginTransaction()
-            database.providerDao().deleteAll()
-            database.providerDao().insert(Provider(authority))
-            database.setTransactionSuccessful()
-            database.endTransaction()
+            try {
+                database.providerDao().deleteAll()
+                database.providerDao().insert(Provider(authority))
+                database.setTransactionSuccessful()
+            } finally {
+                database.endTransaction()
+            }
         }
 
         suspend fun getDescription(context: Context, authority: String): String {

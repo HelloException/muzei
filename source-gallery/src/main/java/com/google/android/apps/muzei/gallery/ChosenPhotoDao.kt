@@ -16,13 +16,6 @@
 
 package com.google.android.apps.muzei.gallery
 
-import android.arch.lifecycle.LiveData
-import android.arch.paging.DataSource
-import android.arch.persistence.room.Dao
-import android.arch.persistence.room.Insert
-import android.arch.persistence.room.OnConflictStrategy
-import android.arch.persistence.room.Query
-import android.arch.persistence.room.TypeConverters
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -31,9 +24,14 @@ import android.os.Binder
 import android.os.Build
 import android.provider.DocumentsContract
 import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.paging.DataSource
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import com.google.android.apps.muzei.api.provider.ProviderContract
 import com.google.android.apps.muzei.gallery.BuildConfig.GALLERY_ART_AUTHORITY
-import com.google.android.apps.muzei.gallery.converter.UriTypeConverter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -68,7 +66,7 @@ internal abstract class ChosenPhotoDao {
     }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    internal abstract fun insertInternal(chosenPhoto: ChosenPhoto): Long
+    internal abstract suspend fun insertInternal(chosenPhoto: ChosenPhoto): Long
 
     suspend fun insert(
             context: Context,
@@ -199,11 +197,7 @@ internal abstract class ChosenPhotoDao {
     }
 
     @Query("SELECT * FROM chosen_photos WHERE _id IN (:ids)")
-    internal abstract fun chosenPhotoBlocking(ids: List<Long>): List<ChosenPhoto>
-
-    private suspend fun getChosenPhotos(ids: List<Long>) = withContext(Dispatchers.Default) {
-        chosenPhotoBlocking(ids)
-    }
+    abstract suspend fun getChosenPhotos(ids: List<Long>): List<ChosenPhoto>
 
     @Query("DELETE FROM chosen_photos WHERE _id IN (:ids)")
     internal abstract fun deleteInternal(ids: List<Long>)
@@ -211,23 +205,6 @@ internal abstract class ChosenPhotoDao {
     suspend fun delete(context: Context, ids: List<Long>) = withContext(Dispatchers.Default) {
         deleteBackingPhotos(context, getChosenPhotos(ids))
         deleteInternal(ids)
-    }
-
-    @TypeConverters(UriTypeConverter::class)
-    @Query("SELECT * FROM chosen_photos WHERE uri=:uri")
-    internal abstract fun chosenPhotoBlocking(uri: Uri): List<ChosenPhoto>
-
-    private suspend fun getChosenPhotos(uri: Uri) = withContext(Dispatchers.Default) {
-        chosenPhotoBlocking(uri)
-    }
-
-    @TypeConverters(UriTypeConverter::class)
-    @Query("DELETE FROM chosen_photos WHERE uri=:uri")
-    internal abstract fun deleteInternal(uri: Uri)
-
-    suspend fun delete(context: Context, uri: Uri) = withContext(Dispatchers.Default) {
-        deleteBackingPhotos(context, getChosenPhotos(uri))
-        deleteInternal(uri)
     }
 
     @Query("DELETE FROM chosen_photos")

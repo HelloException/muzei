@@ -16,17 +16,17 @@
 
 package com.google.android.apps.muzei.sync
 
-import android.arch.lifecycle.Observer
 import android.content.ContentUris
 import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.os.Build
 import android.preference.PreferenceManager
-import android.support.annotation.RequiresApi
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import androidx.lifecycle.Observer
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
@@ -170,7 +170,7 @@ class ProviderChangedWorker(
 
     override val coroutineContext = syncSingleThreadContext
 
-    override suspend fun doWork(): Payload {
+    override suspend fun doWork(): Result {
         val tag = inputData.getString(TAG) ?: ""
         // First schedule the observer to pick up any changes fired
         // by the work done in handleProviderChange
@@ -181,13 +181,9 @@ class ProviderChangedWorker(
             }
         }
         // Now actually handle the provider change
-        return Payload(handleProviderChange(tag))
-    }
-
-    private suspend fun handleProviderChange(tag: String): Result {
         val database = MuzeiDatabase.getInstance(applicationContext)
         val provider = database.providerDao()
-                .getCurrentProvider() ?: return Result.FAILURE
+                .getCurrentProvider() ?: return Result.failure()
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Provider Change ($tag) for ${provider.authority}")
         }
@@ -195,7 +191,7 @@ class ProviderChangedWorker(
         try {
             ContentProviderClientCompat.getClient(applicationContext, contentUri)?.use { client ->
                 val result = client.call(METHOD_GET_LOAD_INFO)
-                        ?: return Result.RETRY
+                        ?: return Result.retry()
                 val lastLoadedTime = result.getLong(KEY_LAST_LOADED_TIME, 0L)
                 client.query(contentUri)?.use { allArtwork ->
                     val providerManager = ProviderManager.getInstance(applicationContext)
@@ -245,13 +241,13 @@ class ProviderChangedWorker(
                         // and haven't just called enqueueNext / enqueuePeriodic
                         client.call(ProtocolConstants.METHOD_REQUEST_LOAD)
                     }
-                    return Result.SUCCESS
+                    return Result.success()
                 }
             }
         } catch (e: Exception) {
             Log.i(TAG, "Provider ${provider.authority} crashed while retrieving artwork: ${e.message}")
         }
-        return Result.RETRY
+        return Result.retry()
     }
 
     private suspend fun isCurrentArtworkValid(

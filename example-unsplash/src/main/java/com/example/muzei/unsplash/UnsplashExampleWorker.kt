@@ -53,12 +53,12 @@ class UnsplashExampleWorker(
             UnsplashService.popularPhotos()
         } catch (e: IOException) {
             Log.w(TAG, "Error reading Unsplash response", e)
-            return Result.RETRY
+            return Result.retry()
         }
 
         if (photos.isEmpty()) {
             Log.w(TAG, "No photos returned from API.")
-            return Result.FAILURE
+            return Result.failure()
         }
 
         val providerClient = ProviderContract.getProviderClient(
@@ -75,6 +75,6 @@ class UnsplashExampleWorker(
                 metadata = photo.user.links.webUri.toString()
             }
         })
-        return Result.SUCCESS
+        return Result.success()
     }
 }

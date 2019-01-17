@@ -57,9 +57,7 @@ class DataLayerLoadWorker(
         }
     }
 
-    override fun doWork(): Result = loadFromDataLayer()
-
-    private fun loadFromDataLayer(): Result {
+    override fun doWork(): Result {
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Loading artwork from the DataLayer")
         }
@@ -71,7 +69,7 @@ class DataLayerLoadWorker(
                 if (BuildConfig.DEBUG) {
                     Log.i(TAG, "Error getting artwork DataItem")
                 }
-                return Result.FAILURE
+                return Result.failure()
             }
             val dataMap = dataItemBuffer.map {
                 DataMapItem.fromDataItem(it).dataMap
@@ -81,7 +79,7 @@ class DataLayerLoadWorker(
                 if (BuildConfig.DEBUG) {
                     Log.w(TAG, "No artwork datamap found.")
                 }
-                return Result.FAILURE
+                return Result.failure()
             }
             val result = Tasks.await<DataClient.GetFdForAssetResponse>(
                     dataClient.getFdForAsset(dataMap.getAsset("image")))
@@ -93,7 +91,7 @@ class DataLayerLoadWorker(
                 }
             } catch (e: IOException) {
                 Log.e(TAG, "Unable to save asset to local storage", e)
-                return Result.FAILURE
+                return Result.failure()
             } finally {
                 result.release()
             }
@@ -112,13 +110,13 @@ class DataLayerLoadWorker(
                     Log.d(TAG, "Successfully wrote artwork to $artworkUri")
                 }
             }
-            return Result.SUCCESS
+            return Result.success()
         } catch (e: ExecutionException) {
             Log.w(TAG, "Error getting artwork from Wear Data Layer", e)
-            return Result.FAILURE
+            return Result.failure()
         } catch (e: InterruptedException) {
             Log.w(TAG, "Error getting artwork from Wear Data Layer", e)
-            return Result.FAILURE
+            return Result.failure()
         }
     }
 }

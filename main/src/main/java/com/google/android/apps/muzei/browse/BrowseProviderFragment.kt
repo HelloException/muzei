@@ -16,29 +16,29 @@
 
 package com.google.android.apps.muzei.browse
 
-import android.arch.lifecycle.ViewModelProvider
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.support.v4.app.Fragment
-import android.support.v4.content.ContextCompat
-import android.support.v4.view.ViewCompat
-import android.support.v7.graphics.drawable.DrawerArrowDrawable
-import android.support.v7.recyclerview.extensions.ListAdapter
-import android.support.v7.util.DiffUtil
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.Toolbar
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
+import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
+import androidx.core.view.ViewCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.observe
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.apps.muzei.room.Artwork
 import com.google.android.apps.muzei.room.MuzeiDatabase
 import com.google.android.apps.muzei.util.coroutineScope
-import com.google.android.apps.muzei.util.observe
 import com.google.android.apps.muzei.util.toast
 import com.google.firebase.analytics.FirebaseAnalytics
 import kotlinx.coroutines.CoroutineScope
@@ -48,13 +48,8 @@ import kotlinx.coroutines.withContext
 import net.nurik.roman.muzei.R
 
 class BrowseProviderFragment: Fragment() {
-    private val viewModelProvider by lazy {
-        ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory
-                .getInstance(requireActivity().application))
-    }
-    private val viewModel by lazy {
-        viewModelProvider[BrowseProviderViewModel::class.java]
-    }
+
+    private val viewModel: BrowseProviderViewModel by viewModels()
     private val adapter = Adapter()
 
     override fun onCreateView(

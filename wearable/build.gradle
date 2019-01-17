@@ -86,17 +86,15 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
     api "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion"
     api "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion"
-    implementation "androidx.core:core-ktx:$rootProject.ext.ktxVersion"
     implementation "android.arch.work:work-runtime-ktx:$workManagerVersion"
-    implementation "com.android.support:support-compat:$supportLibraryVersion"
-    implementation "com.android.support:exifinterface:$supportLibraryVersion"
-    implementation "com.android.support:wear:$supportLibraryVersion"
+    implementation "androidx.core:core-ktx:$coreVersion"
+    implementation "androidx.lifecycle:lifecycle-livedata-core-ktx:$lifecycleVersion"
+    implementation "androidx.fragment:fragment-ktx:$fragmentVersion"
+    implementation "androidx.exifinterface:exifinterface:$exifInterfaceVersion"
+    implementation "androidx.wear:wear:$wearVersion"
     compileOnly "com.google.android.wearable:wearable:$wearableVersion"
     implementation ("com.google.android.support:wearable:$wearableVersion") {
         exclude module: 'support-v4'
-    }
-    implementation ("com.android.support:percent:$supportLibraryVersion") {
-        because 'com.android.support:wear depends on an older version'
     }
 
     implementation ("com.google.android.gms:play-services-wearable:$playServicesWearableVersion") {

@@ -19,11 +19,6 @@ package com.google.android.apps.muzei
 import android.annotation.SuppressLint
 import android.app.WallpaperColors
 import android.app.WallpaperManager
-import android.arch.lifecycle.DefaultLifecycleObserver
-import android.arch.lifecycle.Lifecycle
-import android.arch.lifecycle.LifecycleOwner
-import android.arch.lifecycle.LifecycleRegistry
-import android.arch.lifecycle.MutableLiveData
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -32,13 +27,19 @@ import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
-import android.support.annotation.RequiresApi
-import android.support.v4.os.UserManagerCompat
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.ViewConfiguration
+import androidx.annotation.RequiresApi
+import androidx.core.os.UserManagerCompat
 import androidx.core.os.bundleOf
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.observe
 import com.google.android.apps.muzei.featuredart.BuildConfig.FEATURED_ART_AUTHORITY
 import com.google.android.apps.muzei.notifications.NotificationUpdater
 import com.google.android.apps.muzei.render.ImageLoader
@@ -54,7 +55,6 @@ import com.google.android.apps.muzei.shortcuts.ArtworkInfoShortcutController
 import com.google.android.apps.muzei.sources.SourceManager
 import com.google.android.apps.muzei.sync.ProviderManager
 import com.google.android.apps.muzei.util.coroutineScope
-import com.google.android.apps.muzei.util.observe
 import com.google.android.apps.muzei.util.observeNonNull
 import com.google.android.apps.muzei.wallpaper.LockscreenObserver
 import com.google.android.apps.muzei.wallpaper.WallpaperAnalytics
@@ -210,10 +210,10 @@ class MuzeiWallpaperService : GLWallpaperService(), LifecycleOwner {
             wallpaperLifecycle.addObserver(this)
             setTouchEventsEnabled(true)
             setOffsetNotificationsEnabled(true)
-            EffectsLockScreenOpenLiveData.observeNonNull(this) { isEffectsLockScreenOpen ->
+            EffectsLockScreenOpenLiveData.observe(this) { isEffectsLockScreenOpen ->
                 renderController.onLockScreen = isEffectsLockScreenOpen
             }
-            ArtDetailOpenLiveData.observeNonNull(this) { isArtDetailOpened ->
+            ArtDetailOpenLiveData.observe(this) { isArtDetailOpened ->
                 cancelDelayedBlur()
                 queueEvent { renderer.setIsBlurred(!isArtDetailOpened, true) }
             }

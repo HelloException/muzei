@@ -20,9 +20,9 @@ import android.content.ComponentName
 import android.content.Context
 import android.os.Build
 import android.preference.PreferenceManager
-import android.support.annotation.RequiresApi
 import android.support.wearable.complications.ProviderUpdateRequester
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -78,6 +78,6 @@ class ArtworkComplicationWorker(
         }
         // Reschedule the job to listen for the next change
         scheduleComplicationUpdate()
-        return Result.SUCCESS
+        return Result.success()
     }
 }

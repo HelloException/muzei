@@ -1,8 +1,6 @@
 package com.google.android.apps.muzei
 
 import android.app.Application
-import android.arch.lifecycle.AndroidViewModel
-import android.arch.lifecycle.ViewModelProvider
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,18 +8,21 @@ import android.content.res.Resources
 import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
-import android.support.v4.app.FragmentActivity
-import android.support.v4.content.ContextCompat
-import android.support.wear.ambient.AmbientModeSupport
-import android.support.wear.widget.RoundedDrawable
 import android.text.format.DateFormat
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.activity.viewModels
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.observe
+import androidx.wear.ambient.AmbientModeSupport
+import androidx.wear.widget.RoundedDrawable
 import com.google.android.apps.muzei.datalayer.ActivateMuzeiIntentService
 import com.google.android.apps.muzei.datalayer.DataLayerArtProvider
 import com.google.android.apps.muzei.featuredart.BuildConfig.FEATURED_ART_AUTHORITY
@@ -30,7 +31,6 @@ import com.google.android.apps.muzei.room.MuzeiDatabase
 import com.google.android.apps.muzei.room.sendAction
 import com.google.android.apps.muzei.sync.ProviderManager
 import com.google.android.apps.muzei.util.coroutineScope
-import com.google.android.apps.muzei.util.observe
 import com.google.android.apps.muzei.util.observeNonNull
 import com.google.firebase.analytics.FirebaseAnalytics
 import kotlinx.coroutines.Dispatchers
@@ -97,13 +97,7 @@ class MuzeiActivity : FragmentActivity(),
     private lateinit var providerDescriptionView: TextView
     private lateinit var providerSettingsView: Button
 
-    private val viewModelProvider by lazy {
-        ViewModelProvider(this,
-                ViewModelProvider.AndroidViewModelFactory.getInstance(application))
-    }
-    private val viewModel by lazy {
-        viewModelProvider[MuzeiViewModel::class.java]
-    }
+    private val viewModel: MuzeiViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -31,11 +31,12 @@ import android.os.Handler
 import android.os.Looper
 import android.os.ResultReceiver
 import android.preference.PreferenceManager
-import android.support.annotation.RequiresApi
-import android.support.v4.app.NotificationCompat
-import android.support.v4.app.TaskStackBuilder
-import android.support.v4.content.ContextCompat
 import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.TaskStackBuilder
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import com.google.android.apps.muzei.ChooseProviderActivity
 import com.google.android.apps.muzei.util.toast
@@ -167,11 +168,11 @@ class ActivateMuzeiIntentService : IntentService(TAG) {
 
         @RequiresApi(Build.VERSION_CODES.O)
         private fun createNotificationChannel(context: Context) {
-            val notificationManager = context.getSystemService(NotificationManager::class.java)
+            val notificationManager = NotificationManagerCompat.from(context)
             val channel = NotificationChannel(NOTIFICATION_CHANNEL,
                     context.getString(R.string.datalayer_activate_channel_name),
                     NotificationManager.IMPORTANCE_DEFAULT)
-            notificationManager?.createNotificationChannel(channel)
+            notificationManager.createNotificationChannel(channel)
         }
 
         @Throws(TimeoutException::class)
